@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
@@ -15,24 +15,40 @@
       <main class="main">
         <nav class="topbar" aria-label="Navegação principal">
           <div class="logos">
-            <img id="logo-amado" src="../src/assets/logo-amado.svg" alt="AmadoMaker" />
-            <img id="logo-tec" src="../src/assets/logo-tec.svg" alt="Amadotec" />
+            <img
+              id="logo-amado"
+              src="../src/assets/logo-amado.svg"
+              alt="AmadoMaker"
+            />
+            <img
+              id="logo-tec"
+              src="../src/assets/logo-tec.svg"
+              alt="Amadotec"
+            />
           </div>
 
           <!-- Desktop -->
-          <a class="btn-contact" href="https://amadomaker.com.br">Entrar em contato</a>
+          <a class="btn-contact" href="https://amadomaker.com.br"
+            >Entrar em contato</a
+          >
 
           <!-- Mobile -->
-          <button class="hamburger" type="button" aria-label="Abrir menu" aria-controls="mobile-menu" aria-expanded="false">
+          <button
+            class="hamburger"
+            type="button"
+            aria-label="Abrir menu"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+          >
             <span></span><span></span><span></span>
           </button>
 
           <div id="mobile-menu" class="mobile-menu" hidden>
-            <a class="mobile-item" href="https://amadomaker.com.br">Entrar em contato</a>
+            <a class="mobile-item" href="https://amadomaker.com.br"
+              >Entrar em contato</a
+            >
           </div>
         </nav>
-
-
 
         <section class="content" aria-labelledby="titulo">
           <header class="hero">
@@ -44,7 +60,13 @@
           <form id="f" class="card" novalidate>
             <div class="row">
               <label for="id">ID do certificado</label>
-              <input id="id" name="id" required placeholder="Ex.: C-8F3A2D" autocomplete="off" />
+              <input
+                id="id"
+                name="id"
+                required
+                placeholder="Ex.: C-8F3A2D"
+                autocomplete="off"
+              />
             </div>
 
             <div class="row">
@@ -75,90 +97,120 @@
     <!-- App (ES Modules) -->
     <script type="module" src="../src/js/app.js"></script>
     <script>
-      const API_URL = 'https://script.google.com/macros/s/AKfycbzDO9MuZaXfASS2VgRP3GJcye-i5byJ3rdRlckCqSclFIc8i7EsD3nFA3ZcPp230doN/exec';
-      
-      function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-      function showMsg(html){ const el=document.getElementById('resultado'); el.innerHTML=html; el.hidden=false; }
-      function openPdf(url){ window.open(url, '_blank', 'noopener,noreferrer'); }
-      
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbzDO9MuZaXfASS2VgRP3GJcye-i5byJ3rdRlckCqSclFIc8i7EsD3nFA3ZcPp230doN/exec";
+
+      function escapeHtml(s) {
+        return String(s || "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[m])
+        );
+      }
+      function showMsg(html) {
+        const el = document.getElementById("resultado");
+        el.innerHTML = html;
+        el.hidden = false;
+      }
+      function openPdf(url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
       // --- fluxo ASSINADO (QR): GET ?id=...&s=...
-      async function validateSigned(id, s){
-        const url = `${API_URL}?id=${encodeURIComponent(id)}&s=${encodeURIComponent(s)}`;
+      async function validateSigned(id, s) {
+        const url = `${API_URL}?id=${encodeURIComponent(
+          id
+        )}&s=${encodeURIComponent(s)}`;
         const r = await fetch(url);
         const data = await r.json();
-        if (data.ok && data.valid){
+        if (data.ok && data.valid) {
           let html = `
             <p style="color:#0a0"><strong>Certificado válido ✔</strong></p>
             <p>Nome: ${escapeHtml(data.nome)}<br>
                Emitido em: ${escapeHtml(data.emitido_em)}<br>
                Status: ${escapeHtml(data.status)}</p>`;
-          if (data.pdf_url){
+          if (data.pdf_url) {
             html += `<button id="abrirPdf">Abrir PDF</button>`;
           }
           showMsg(html);
-          if (data.pdf_url){
-            document.getElementById('abrirPdf').onclick = () => openPdf(data.pdf_url);
+          if (data.pdf_url) {
+            document.getElementById("abrirPdf").onclick = () =>
+              openPdf(data.pdf_url);
           }
         } else {
           showMsg(`<p><strong>ID ou credencial inválidos.</strong></p>`);
         }
       }
-      
+
       // --- fluxo CPF (form): POST {id, cpf}
-      async function validateWithCpf(id, cpf){
+      async function validateWithCpf(id, cpf) {
         const r = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type':'application/json' },
-          body: JSON.stringify({ id, cpf })
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, cpf }),
         });
         const data = await r.json();
-        if (data.ok && data.valid){
+        if (data.ok && data.valid) {
           let html = `
             <p style="color:#0a0"><strong>Certificado válido ✔</strong></p>
             <p>Nome: ${escapeHtml(data.nome)}<br>
                Emitido em: ${escapeHtml(data.emitido_em)}<br>
                Status: ${escapeHtml(data.status)}</p>`;
-          if (data.pdf_url){
+          if (data.pdf_url) {
             html += `<button id="abrirPdf">Abrir PDF</button>`;
           }
           showMsg(html);
-          if (data.pdf_url){
-            document.getElementById('abrirPdf').onclick = () => openPdf(data.pdf_url);
+          if (data.pdf_url) {
+            document.getElementById("abrirPdf").onclick = () =>
+              openPdf(data.pdf_url);
           }
         } else {
           showMsg(`<p><strong>ID ou CPF inválidos.</strong></p>`);
         }
       }
-      
+
       // --- inicialização: se vier de QR, valida automaticamente
-      (function init(){
+      (function init() {
         const p = new URLSearchParams(location.search);
-        const id = (p.get('id') || '').toUpperCase();
-        const s  = p.get('s') || '';
-      
+        const id = (p.get("id") || "").toUpperCase();
+        const s = p.get("s") || "";
+
         // Preenche o campo de ID se existir no seu form:
-        const idInput = document.getElementById('id'); if (idInput) idInput.value = id;
-      
-        if (id && s){
+        const idInput = document.getElementById("id");
+        if (idInput) idInput.value = id;
+
+        if (id && s) {
           // Esconde campo/linha de CPF se existir
-          const cpfRow = document.getElementById('cpfRow'); if (cpfRow) cpfRow.style.display = 'none';
-          const cpfInput = document.getElementById('cpf'); if (cpfInput) cpfInput.disabled = true;
-      
+          const cpfRow = document.getElementById("cpfRow");
+          if (cpfRow) cpfRow.style.display = "none";
+          const cpfInput = document.getElementById("cpf");
+          if (cpfInput) cpfInput.disabled = true;
+
           validateSigned(id, s); // auto-valida
         }
       })();
-      
+
       // --- exemplo de handler do seu formulário (se já existir, mantenha o seu)
-      const form = document.getElementById('form');
-      if (form){
-        form.addEventListener('submit', (ev) => {
+      const form = document.getElementById("form");
+      if (form) {
+        form.addEventListener("submit", (ev) => {
           ev.preventDefault();
-          const id  = (document.getElementById('id').value || '').trim().toUpperCase();
-          const cpf = (document.getElementById('cpf').value || '').replace(/\D+/g,'');
+          const id = (document.getElementById("id").value || "")
+            .trim()
+            .toUpperCase();
+          const cpf = (document.getElementById("cpf").value || "").replace(
+            /\D+/g,
+            ""
+          );
           validateWithCpf(id, cpf);
         });
       }
-</script>
-
+    </script>
   </body>
 </html>

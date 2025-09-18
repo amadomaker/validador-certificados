@@ -1,8 +1,8 @@
+// src/js/app.js
 import { $, onlyDigits, maskCPF } from './utils/dom.js';
-import { validateCertificate } from './services/api.js';
+import { verifySigned, verifyWithCpf } from './services/api.js';
 import { setLoading, clearResult, renderError, renderInvalid, renderValid } from './ui/render.js';
-
-
+import { initMobileMenu } from './ui/menu.js';
 
 // Referências
 const form = $('#f');
@@ -11,16 +11,31 @@ const inputCpf = $('#cpf');
 const btnClear = $('#clear');
 const btnSubmit = $('#btn');
 
+// Helpers de UI para CPF (quando vier via QR não pedimos CPF)
+function hideCpfField() {
+  if (!inputCpf) return;
+  const row = inputCpf.closest('.form-group') || inputCpf.closest('.row') || inputCpf.parentElement;
+  if (row) row.style.display = 'none';
+  inputCpf.disabled = true;
+}
+function showCpfField() {
+  if (!inputCpf) return;
+  const row = inputCpf.closest('.form-group') || inputCpf.closest('.row') || inputCpf.parentElement;
+  if (row) row.style.display = '';
+  inputCpf.disabled = false;
+}
+
 // Limpar
-btnClear.addEventListener('click', () => {
+btnClear?.addEventListener('click', () => {
   inputId.value = '';
   inputCpf.value = '';
+  showCpfField();
   clearResult();
   inputId.focus();
 });
 
 // Máscara de CPF (visual) sem interferir na captura de dígitos
-inputCpf.addEventListener('input', () => {
+inputCpf?.addEventListener('input', () => {
   const caret = inputCpf.selectionStart;
   const beforeLen = inputCpf.value.length;
   inputCpf.value = maskCPF(inputCpf.value);
@@ -29,11 +44,11 @@ inputCpf.addEventListener('input', () => {
   inputCpf.setSelectionRange(caret + diff, caret + diff);
 });
 
-// Submit
-form.addEventListener('submit', async (e) => {
+// Submit (fluxo com CPF → POST JSON)
+form?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const id = inputId.value.trim();
+  const id = inputId.value.trim().toUpperCase();
   const cpfDigits = onlyDigits(inputCpf.value);
 
   if (!id) {
@@ -48,13 +63,13 @@ form.addEventListener('submit', async (e) => {
   }
 
   setLoading();
-  btnSubmit.disabled = true;
+  if (btnSubmit) btnSubmit.disabled = true;
 
   try {
-    const data = await validateCertificate({ id, cpf: cpfDigits });
+    const data = await verifyWithCpf(id, cpfDigits);
 
     if (!data?.ok) {
-      renderError(data?.error || 'Falha na verificação');
+      renderError(data?.error || 'Falha na verificação.');
       return;
     }
     if (data.valid) {
@@ -63,27 +78,43 @@ form.addEventListener('submit', async (e) => {
       renderInvalid();
     }
   } catch (err) {
-    renderError(err.message);
+    renderError(err?.message || 'Erro inesperado.');
   } finally {
-    btnSubmit.disabled = false;
+    if (btnSubmit) btnSubmit.disabled = false;
   }
 });
 
-// --- Auto-preencher por querystring (QR Code amigável) ---
-(function autoFill() {
+// --- Auto-validação por querystring (QR assinado: ?id=...&s=...) ---
+(function autoFromQuery() {
   const p = new URLSearchParams(location.search);
-  const id = p.get('id');
-  const cpf = p.get('cpf');
+  const id = (p.get('id') || '').toUpperCase();
+  const s  = p.get('s') || '';
 
   if (id) inputId.value = id;
-  if (cpf) inputCpf.value = maskCPF(cpf);
 
-  if (id && cpf) {
-    // dispara submissão automática
-    setTimeout(() => form.dispatchEvent(new Event('submit')), 0);
+  // Se veio assinatura, escondemos o CPF e validamos automaticamente (GET assinado)
+  if (id && s) {
+    hideCpfField();
+    setLoading();
+    if (btnSubmit) btnSubmit.disabled = true;
+
+    verifySigned(id, s)
+      .then((data) => {
+        if (data?.ok && data.valid) {
+          renderValid(data);
+        } else if (data && data.ok === false) {
+          renderError(data.error || 'Erro na validação.');
+        } else {
+          renderInvalid();
+        }
+      })
+      .catch(() => {
+        renderError('Falha de rede na validação.');
+      })
+      .finally(() => {
+        if (btnSubmit) btnSubmit.disabled = false;
+      });
   }
 })();
 
-
-import { initMobileMenu } from './ui/menu.js';
 initMobileMenu();
