@@ -7,17 +7,20 @@ export async function verifySigned(id, s) {
   return res.json();
 }
 
-// Fluxo com CPF (form): POST JSON { id, cpf }
+// Fluxo com CPF (form): POST "simple request" para evitar preflight CORS
 export async function verifyWithCpf(id, cpf) {
   const payload = {
     id: String(id || '').trim().toUpperCase(),
     cpf: String(cpf || '').replace(/\D+/g, '')
   };
+
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    // <- texto plano evita o preflight OPTIONS
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: JSON.stringify(payload),
     credentials: 'omit'
   });
+
   return res.json();
 }
